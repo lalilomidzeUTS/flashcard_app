@@ -52,35 +52,40 @@ export default function FlashCardApp() {
   };
 
   const addFlashcard = async () => {
-    if (input.trim() && inputAnswer.trim()) {
-      const newCard = {
-        id: Date.now(),
-        question: input.trim(),
-        answer: inputAnswer.trim(),
-        isFlipped: false
-      };
+  if (input.trim() && inputAnswer.trim()) {
+    const newCard = {
+      id: Date.now().toString(),
+      question: input.trim(),
+      answer: inputAnswer.trim(),
+      isFlipped: false
+    };
 
-      try {
-        const response = await fetch(`${API_URL}/flashcards`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newCard),
-        });
+    try {
+      const response = await fetch(`${API_URL}/flashcards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCard),
+      });
 
-        if (!response.ok) throw new Error('Failed to create flashcard');
-        const createdCard = await response.json();
-        setFlashcards([...flashcards, createdCard]);
-        setInput('');
-        setInputAnswer('');
-        inputRef.current?.focus();
-      } catch (error) {
-        console.error('Error adding flashcard:', error);
-        alert('Failed to add flashcard. Please try again.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Full server error:', JSON.stringify(errorData, null, 2));
+        throw new Error(`Server error: ${JSON.stringify(errorData)}`);
       }
+      
+      const createdCard = await response.json();
+      setFlashcards([...flashcards, createdCard]);
+      setInput('');
+      setInputAnswer('');
+      inputRef.current?.focus();
+    } catch (error) {
+      console.error('Error adding flashcard:', error);
+      alert(`Failed to add flashcard: ${error.message}`);
     }
-  };
+  }
+};
 
   const toggleFlip = async (id) => {
     try {
@@ -169,7 +174,6 @@ export default function FlashCardApp() {
       <div className="app-wrapper">
         <div className="header">
           <h1 className="header-title">My Flashcards</h1>
-          <p className="header-subtitle">Study and learn efficiently</p>
         </div>
 
         {loading ? (
@@ -209,7 +213,6 @@ export default function FlashCardApp() {
             <div className="todo-list">
               {flashcards.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-icon">🎴</div>
                   <p>No flashcards yet. Add one above!</p>
                 </div>
               ) : (
